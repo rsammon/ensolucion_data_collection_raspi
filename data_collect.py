@@ -9,6 +9,9 @@ baudRate = 9600
 byteSize = 8
 parityType = serial.PARITY_NONE
 stopBits = serial.STOPBITS_ONE
+sensorAddress = 0x28
+leftBusNum = 1
+rightBusNum = 3
 
 # Dictates how many readings to take or how long to take readings for
 readingMode = input("Take readings based on time (T) or number of readings (N): ").upper()
@@ -30,6 +33,35 @@ while(not ser.is_open): #continuously try to connect to port until it succeeds
 print("")
 print("Connection successful. Connected to " + ser.name)
 print("Connection settings: " + str(ser.get_settings()))
+
+#open i2c buses
+leftbus = SMBus(leftBusNum)
+rightbus = SMBus(rightBusNum)
+
+def calcPressure(data):
+    #TODO implement
+
+def get_data():
+    textOut = []
+    while(ser.in_waiting == 0): #wait until data available
+        pass
+    dataOut = []
+    badFlag = False
+    for i in range(6):
+        line = ser.readline().decode("utf-8")
+        print(line, end='') 
+        if line.startswith("Error"): #skips errors
+            badFlag = True
+            break
+        if(not i == 0):
+            if(i == 5):
+                dataOut.append(float(line.split(":")[1].strip()))
+            else:
+                dataOut.append(float((line.split(":")[1]).split(",")[0]))
+    #TODO get data from pressure sensors
+    return [textOut, dataOut]
+
+#TODO initial data print
 
 with open('data.csv', 'w', newline='') as f: #setup csv writer
     writer = csv.writer(f)
@@ -62,4 +94,6 @@ with open('data.csv', 'w', newline='') as f: #setup csv writer
         if not badFlag:
             writer.writerow(csvRow)
         j += 1
-    ser.close()
+ser.close()
+leftbus.close()
+rightbus.close()
