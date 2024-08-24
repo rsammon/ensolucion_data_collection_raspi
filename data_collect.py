@@ -42,8 +42,9 @@ def calcPressure(data):
     digital = data[1]<<8 | data[0]
     return (digital - 1638)*100.0/13108.0
 
-def get_data():
+def getData():
     textOut = []
+    ser.write('read\r\n'.encode("utf-8")) #sends command to print
     while(ser.in_waiting == 0): #wait until data available
         pass
     dataOut = []
@@ -59,7 +60,7 @@ def get_data():
                 dataOut.append(float(line.split(":")[1].strip()))
             else:
                 dataOut.append(float((line.split(":")[1]).split(",")[0]))
-    data = leftbus.read_i2c_block_data(sensorAddress,0,2)
+    data = leftbus.read_i2c_block_data(40,0,2)
     leftPress = calcPressure(data)
     data = rightbus.read_i2c_block_data(sensorAddress,0,2)
     rightPress = calcPressure(data)
@@ -85,6 +86,8 @@ with open('data.csv', 'w', newline='') as f: #setup csv writer
         textOut.insert(0,current)
         csvRow.insert(0,current)
         textOut.append(csvRow)
+        for line in textOut:
+            print(line)
          
         writer.writerow(csvRow)
         j += 1
