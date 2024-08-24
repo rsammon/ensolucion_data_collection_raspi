@@ -39,7 +39,8 @@ leftbus = SMBus(leftBusNum)
 rightbus = SMBus(rightBusNum)
 
 def calcPressure(data):
-    #TODO implement
+    digital = data[1]<<8 | data[0]
+    return (digital - 1638)*100.0/13108.0
 
 def get_data():
     textOut = []
@@ -49,7 +50,7 @@ def get_data():
     badFlag = False
     for i in range(6):
         line = ser.readline().decode("utf-8")
-        print(line, end='') 
+        textOut.append(line)
         if line.startswith("Error"): #skips errors
             badFlag = True
             break
@@ -59,6 +60,12 @@ def get_data():
             else:
                 dataOut.append(float((line.split(":")[1]).split(",")[0]))
     #TODO get data from pressure sensors
+    data = leftbus.read_i2c_block_data(sensorAddress,0,2)
+    leftPress = calcPressure(data)
+    data = rightbus.read_i2c_block_data(sensorAddress,0,2)
+    rightPress = calcPressure(data)
+    textOut.append("Left Pressure Sensor (psi): " + leftPress)
+    textOut.append("Right Pressure Sensor (psi): " + rightPress)
     return [textOut, dataOut]
 
 #TODO initial data print
