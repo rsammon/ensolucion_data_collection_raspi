@@ -2,6 +2,8 @@ import csv
 import time
 from smbus2 import SMBus
 import serial
+import select
+import sys
 
 # configurations
 serialPort = "/dev/ttyACM0"
@@ -61,7 +63,6 @@ def getData():
             else:
                 dataOut.append(float((line.split(":")[1]).split(",")[1]))
     data = leftbus.read_i2c_block_data(40,0,2)
-    textOut.append(data)
     leftPress = calcPressure(data)
     data = rightbus.read_i2c_block_data(sensorAddress,0,2)
     rightPress = calcPressure(data)
@@ -71,13 +72,16 @@ def getData():
     dataOut.append(rightPress)
     return [textOut, dataOut]
 
-#TODO initial data print
+while select.select([sys.stdin],[],[],0) == ([],[],[]):
+    [textOut,dataOut] = getData()
+    for line in textOut:
+        print(line)
+
 
 with open('data.csv', 'w', newline='') as f: #setup csv writer
     writer = csv.writer(f)
     writer.writerow(["Time (s)", "02 Purity (%)", "Flow Rate (lpm)", "Temperature (C)", "Relative Humidity (%)", "Pressure (psi)"]) #header/labels
 
-    input("to begin readings, press enter: ")
     start = time.time() #time at beginning of data collection
     j = 0
     while (j < readings and readingMode == "N") or (time.time() - start < readingTime and readingMode == "T"):
