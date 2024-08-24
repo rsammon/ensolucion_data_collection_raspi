@@ -39,7 +39,7 @@ leftbus = SMBus(leftBusNum)
 rightbus = SMBus(rightBusNum)
 
 def calcPressure(data):
-    digital = data[1]<<8 | data[0]
+    digital = data[0]<<8 | data[1]
     return (digital - 1638)*100.0/13108.0
 
 def getData():
@@ -59,13 +59,14 @@ def getData():
             if(i == 5):
                 dataOut.append(float(line.split(":")[1].strip()))
             else:
-                dataOut.append(float((line.split(":")[1]).split(",")[0]))
+                dataOut.append(float((line.split(":")[1]).split(",")[1]))
     data = leftbus.read_i2c_block_data(40,0,2)
+    textOut.append(data)
     leftPress = calcPressure(data)
     data = rightbus.read_i2c_block_data(sensorAddress,0,2)
     rightPress = calcPressure(data)
-    textOut.append("Left Pressure Sensor (psi): " + leftPress)
-    textOut.append("Right Pressure Sensor (psi): " + rightPress)
+    textOut.append("Left Pressure Sensor (psi): " + str(leftPress))
+    textOut.append("Right Pressure Sensor (psi): " + str(rightPress))
     dataOut.append(leftPress)
     dataOut.append(rightPress)
     return [textOut, dataOut]
