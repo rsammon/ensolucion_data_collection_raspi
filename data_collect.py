@@ -59,13 +59,14 @@ def get_data():
                 dataOut.append(float(line.split(":")[1].strip()))
             else:
                 dataOut.append(float((line.split(":")[1]).split(",")[0]))
-    #TODO get data from pressure sensors
     data = leftbus.read_i2c_block_data(sensorAddress,0,2)
     leftPress = calcPressure(data)
     data = rightbus.read_i2c_block_data(sensorAddress,0,2)
     rightPress = calcPressure(data)
     textOut.append("Left Pressure Sensor (psi): " + leftPress)
     textOut.append("Right Pressure Sensor (psi): " + rightPress)
+    dataOut.append(leftPress)
+    dataOut.append(rightPress)
     return [textOut, dataOut]
 
 #TODO initial data print
@@ -74,32 +75,18 @@ with open('data.csv', 'w', newline='') as f: #setup csv writer
     writer = csv.writer(f)
     writer.writerow(["Time (s)", "02 Purity (%)", "Flow Rate (lpm)", "Temperature (C)", "Relative Humidity (%)", "Pressure (psi)"]) #header/labels
 
-    # TODO refactor into seperate method
     input("to begin readings, press enter: ")
     start = time.time() #time at beginning of data collection
     j = 0
     while (j < readings and readingMode == "N") or (time.time() - start < readingTime and readingMode == "T"):
-        ser.write('read\r\n'.encode("utf-8")) #sends command to print 
-        ser.flush() #wait until message is fully send
-        while(ser.in_waiting == 0): #wait until data available
-            pass
+        textOut = []
         current = (time.time() -start)
-        print(current)
-        csvRow = [current]
-        badFlag = False
-        for i in range(6):
-            line = ser.readline().decode("utf-8")
-            print(line, end='') 
-            if line.startswith("Error"): #skips errors
-                badFlag = True
-                break
-            if(not i == 0):
-                if(i == 5):
-                    csvRow.append(line.split(":")[1].strip())
-                else:
-                    csvRow.append((line.split(":")[1]).split(",")[0])
-        if not badFlag:
-            writer.writerow(csvRow)
+        [textOut,csvRow] = getData()
+        textOut.insert(0,current)
+        csvRow.insert(0,current)
+        textOut.append(csvRow)
+         
+        writer.writerow(csvRow)
         j += 1
 ser.close()
 leftbus.close()
